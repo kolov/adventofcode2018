@@ -1,17 +1,11 @@
 package example
 
 import scala.io.Source
+import Shared._
+
 
 object Day8Part1 extends App {
   val chars: Stream[Char] = Source.fromResource("input-part1.txt").getLines.toList.reduce(_ + _).toStream
-
-  def ints(chars: Stream[Char]): Stream[Int] = {
-    val tail = chars.dropWhile(!_.isDigit)
-    val digits = tail.takeWhile(_.isDigit).toList.mkString("")
-    if (digits.length > 0)
-      digits.toInt #:: ints(tail.drop(digits.length))
-    else Stream.empty
-  }
 
   def readNode(ints: Stream[Int]): (Int, Stream[Int]) = {
     val countNodes = ints.head
@@ -32,14 +26,6 @@ object Day8Part1 extends App {
 
 object Day8Part2 extends App {
   val chars: Stream[Char] = Source.fromResource("input-part2.txt").getLines.toList.reduce(_ + _).toStream
-
-  def ints(chars: Stream[Char]): Stream[Int] = {
-    val tail = chars.dropWhile(!_.isDigit)
-    val digits = tail.takeWhile(_.isDigit).toList.mkString("")
-    if (digits.length > 0)
-      digits.toInt #:: ints(tail.drop(digits.length))
-    else Stream.empty
-  }
 
   case class Node(childrenCount: Int, metaCount: Int, children: List[Node], meta: List[Int]) {
     def valueOf(ix: Int): Int = if (ix < childrenCount + 1) children(ix - 1).value else 0
@@ -65,4 +51,14 @@ object Day8Part2 extends App {
 
   val (node, _) = readNode(ints(chars))
   println(s"Total: ${node.value}")
+}
+
+object Shared {
+  def ints(chars: Stream[Char]): Stream[Int] = {
+    val tail = chars.dropWhile(!_.isDigit)
+    val digits = tail.takeWhile(_.isDigit).toList.mkString("")
+    if (digits.length > 0)
+      digits.toInt #:: ints(tail.drop(digits.length))
+    else Stream.empty
+  }
 }
