@@ -1,5 +1,6 @@
 package example
 
+// See https://adventofcode.com/2018/day/9
 
 object Day9Part1 extends App {
 
@@ -48,23 +49,23 @@ object Day9Part1 extends App {
   solve(21, 6111)
   solve(30, 5807)
   solve(452, 70784)
-  //  solve(452, 7078400) - it takes hours and may overflow :-(
+  //  solve(452, 7078400) - it takes hours and may overflow maxint :-(
 
 }
 
 
 object Day9Part2 extends App {
 
-  case class Cell(var left: Cell, var right: Cell, value: Int) {
+  case class Marble(var left: Marble, var right: Marble, value: Int) {
     override def toString: String = s"[ ${left.value}, $value, ${right.value}] "
   }
 
-  case class Game(highestMarble: Int, highScore: BigDecimal, current: Cell, scores: Array[BigDecimal]) {
+  case class Game(highestMarble: Int, highScore: BigDecimal, current: Marble, scores: Array[BigDecimal]) {
     def player = ( ( highestMarble - 1 ) % scores.size ) + 1
 
-    def loopCells(cell: Cell): Stream[Cell] = cell #:: loopCells(cell.right)
+    def loopFrom(cell: Marble): Stream[Marble] = cell #:: loopFrom(cell.right)
 
-    def allCells(cell: Cell) = cell +: loopCells(cell.right).takeWhile(_.value != cell.value).toList
+    def allCells(cell: Marble) = cell +: loopFrom(cell.right).takeWhile(_.value != cell.value).toList
 
     def show =
       println(s"[${player + 1}] " +
@@ -77,7 +78,7 @@ object Day9Part2 extends App {
       if (marbleNummber % 23 != 0) {
         val right1 = current.right
         val right2 = right1.right
-        val newCell = Cell(right1, right2, marbleNummber)
+        val newCell = Marble(right1, right2, marbleNummber)
         right1.right = newCell
         right2.left = newCell
 
@@ -100,7 +101,7 @@ object Day9Part2 extends App {
   }
 
   def game0(players: Int) = {
-    val cell = new Cell(null, null, 0)
+    val cell = new Marble(null, null, 0)
     cell.left = cell
     cell.right = cell
     Game(0, 0, cell, ( 1 to players ).foldLeft(Array[BigDecimal]())((v, _) => v :+ BigDecimal(0)))
@@ -112,11 +113,9 @@ object Day9Part2 extends App {
   def points(g: Game): Stream[Game] = g #:: points(g.play)
 
 
-  def finished(game: Game, limit: Int) = game.highestMarble > limit
-
   def solve(players: Int, lastMarble: Int) =
     println(s"The high score after marble $lastMarble was ${
-      points(game0(players)).dropWhile(g => !finished(g, lastMarble)).head.highScore
+      points(game0(players)).dropWhile(_.highestMarble < lastMarble).head.highScore
     }")
 
   solve(9, 40)
