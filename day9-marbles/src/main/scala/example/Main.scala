@@ -58,6 +58,21 @@ object Day9Part2 extends App {
 
   case class Marble(var left: Marble, var right: Marble, value: Int) {
     override def toString: String = s"[ ${left.value}, $value, ${right.value}] "
+
+    def removeAndRight = {
+      left.right = right
+      right.left = left
+      right
+    }
+
+    def insertRight(value: Int) = {
+      val newMarble = Marble(this, right, value)
+      right.left = newMarble
+      right = newMarble
+      newMarble
+    }
+
+    def left(n: Int): Marble = if (n == 0) this else left.left(n - 1)
   }
 
   case class Game(highestMarble: Int, highScore: BigDecimal, current: Marble, scores: Array[BigDecimal]) {
@@ -68,33 +83,23 @@ object Day9Part2 extends App {
     def allCells(cell: Marble) = cell +: loopFrom(cell.right).takeWhile(_.value != cell.value).toList
 
     def show =
-      println(s"[${player + 1}] " +
-        allCells(current).mkString(" ") +
+      println(s"[${player}] " +
+        allCells(current).map(_.value).mkString(" ") +
         s" [$highScore]"
       )
 
     def play: Game = {
       val marbleNummber = highestMarble + 1
       if (marbleNummber % 23 != 0) {
-        val right1 = current.right
-        val right2 = right1.right
-        val newCell = Marble(right1, right2, marbleNummber)
-        right1.right = newCell
-        right2.left = newCell
-
-        Game(marbleNummber, highScore, newCell, scores)
+        Game(marbleNummber, highScore, current.right.insertRight(marbleNummber), scores)
       } else {
-        val left6 = current.left.left.left.left.left.left
-        val left7 = left6.left
-        val left8 = left7.left
-        left8.right = left6
-        left6.left = left8
+        val left7 = current.left(7)
         val player = ( marbleNummber - 1 ) % scores.size
         val newScore = scores(player) + left7.value + marbleNummber
         val newScores = scores.updated(player, newScore)
         val newHighScore = if (newScore > highScore) newScore else highScore
 
-        Game(marbleNummber, newHighScore, left6, newScores)
+        Game(marbleNummber, newHighScore, left7.removeAndRight, newScores)
       }
     }
 
@@ -110,7 +115,10 @@ object Day9Part2 extends App {
 
   var start = System.currentTimeMillis
 
-  def points(g: Game): Stream[Game] = g #:: points(g.play)
+  def points(g: Game): Stream[Game] = {
+    //    g.show
+    g #:: points(g.play)
+  }
 
 
   def solve(players: Int, lastMarble: Int) =
